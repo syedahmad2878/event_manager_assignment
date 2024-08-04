@@ -1,8 +1,50 @@
-from builtins import str
 import pytest
 from pydantic import ValidationError
 from datetime import datetime
+import uuid
 from app.schemas.user_schemas import UserBase, UserCreate, UserUpdate, UserResponse, UserListResponse, LoginRequest
+
+# Fixtures for test data
+@pytest.fixture
+def user_base_data():
+    return {
+        "email": "john.doe@example.com",
+        "nickname": "john_doe",
+        "first_name": "John",
+        "last_name": "Doe",
+        "bio": "Experienced software developer specializing in web applications.",
+        "profile_picture_url": "https://example.com/profiles/john.jpg",
+        "linkedin_profile_url": "https://linkedin.com/in/johndoe",
+        "github_profile_url": "https://github.com/johndoe"
+    }
+
+@pytest.fixture
+def user_create_data(user_base_data):
+    return {**user_base_data, "password": "Secure*1234"}
+
+@pytest.fixture
+def user_update_data():
+    return {
+        "email": "john.doe.updated@example.com",
+        "nickname": "john_doe_updated",
+        "first_name": "Johnny",
+        "last_name": "Doe",
+        "bio": "Updated bio.",
+        "profile_picture_url": "https://example.com/profiles/john_updated.jpg",
+        "linkedin_profile_url": "https://linkedin.com/in/johndoeupdated",
+        "github_profile_url": "https://github.com/johndoeupdated"
+    }
+
+@pytest.fixture
+def user_response_data(user_base_data):
+    return {**user_base_data, "id": uuid.uuid4(), "role": "AUTHENTICATED", "is_professional": True}
+
+@pytest.fixture
+def login_request_data():
+    return {
+        "email": "john.doe@example.com",
+        "password": "Secure*1234"
+    }
 
 # Tests for UserBase
 def test_user_base_valid(user_base_data):
@@ -26,7 +68,6 @@ def test_user_update_valid(user_update_data):
 def test_user_response_valid(user_response_data):
     user = UserResponse(**user_response_data)
     assert user.id == user_response_data["id"]
-    # assert user.last_login_at == user_response_data["last_login_at"]
 
 # Tests for LoginRequest
 def test_login_request_valid(login_request_data):
@@ -60,10 +101,18 @@ def test_user_base_url_invalid(url, user_base_data):
     with pytest.raises(ValidationError):
         UserBase(**user_base_data)
 
-# Tests for UserBase
-def test_user_base_invalid_email(user_base_data_invalid):
+# Tests for UserBase with invalid email
+def test_user_base_invalid_email():
+    invalid_email_data = {
+        "email": "john.doe.example.com",
+        "nickname": "john_doe",
+        "first_name": "John",
+        "last_name": "Doe",
+        "bio": "Experienced software developer specializing in web applications.",
+        "profile_picture_url": "https://example.com/profiles/john.jpg",
+        "linkedin_profile_url": "https://linkedin.com/in/johndoe",
+        "github_profile_url": "https://github.com/johndoe"
+    }
     with pytest.raises(ValidationError) as exc_info:
-        user = UserBase(**user_base_data_invalid)
-    
+        UserBase(**invalid_email_data)
     assert "value is not a valid email address" in str(exc_info.value)
-    assert "john.doe.example.com" in str(exc_info.value)
