@@ -15,9 +15,10 @@ Fixtures:
 
 # Standard library imports
 from builtins import range
-from datetime import datetime
+from datetime import datetime, timedelta
 from unittest.mock import patch
 from uuid import uuid4
+import uuid
 
 # Third-party imports
 import pytest
@@ -211,6 +212,22 @@ async def manager_user(db_session: AsyncSession):
     return user
 
 
+@pytest.fixture(scope="function")
+def manager_token(manager_user):
+    token_data = {"sub": str(manager_user.id), "role": manager_user.role.name}
+    return create_access_token(data=token_data, expires_delta=timedelta(minutes=30))
+
+@pytest.fixture(scope="function")
+def user_token(user):
+    token_data = {"sub": str(user.id), "role": user.role.name}
+    return create_access_token(data=token_data, expires_delta=timedelta(minutes=30))
+
+@pytest.fixture(scope="function")
+def admin_token(admin_user):
+    # Assuming admin_user has an 'id' and 'role' attribute
+    token_data = {"sub": str(admin_user.id), "role": admin_user.role.name}
+    return create_access_token(data=token_data, expires_delta=timedelta(minutes=30))
+
 # Fixtures for common test data
 @pytest.fixture
 def user_base_data():
@@ -245,16 +262,14 @@ def user_update_data():
         "bio": "I specialize in backend development with Python and Node.js.",
         "profile_picture_url": "https://example.com/profile_pictures/john_doe_updated.jpg"
     }
-
-@pytest.fixture
-def user_response_data():
+def user_response_data(user_base_data):
     return {
-        "id": "unique-id-string",
-        "username": "testuser",
-        "email": "test@example.com",
-        "last_login_at": datetime.now(),
-        "created_at": datetime.now(),
-        "updated_at": datetime.now(),
+        "id": uuid.uuid4(),
+        "nickname": user_base_data["nickname"],
+        "first_name": user_base_data["first_name"],
+        "last_name": user_base_data["last_name"],
+        "role": user_base_data["role"],
+        "email": user_base_data["email"],
         "links": []
     }
 
